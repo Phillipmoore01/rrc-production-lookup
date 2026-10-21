@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Rrc.Ebcdic/Rrc.Ebcdic.csproj" />
+    <Project Path="src/Rrc.Production.Data/Rrc.Production.Data.csproj" />
+    <Project Path="src/Rrc.Production.Ingestion/Rrc.Production.Ingestion.csproj" />
+    <Project Path="src/Rrc.Production.Web/Rrc.Production.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Rrc.Ebcdic.Tests/Rrc.Ebcdic.Tests.csproj" />
+    <Project Path="tests/Rrc.Production.Ingestion.Tests/Rrc.Production.Ingestion.Tests.csproj" />
+  </Folder>
+</Solution>

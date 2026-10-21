@@ -39,6 +39,31 @@ Royalty owners verify their payments against the production reported for their l
 - xUnit and Moq
 - GitHub Actions CI
 
+## Repository layout
+
+- `src/Rrc.Ebcdic` — EBCDIC text (code page 037), packed decimal (COMP-3), and zoned decimal decoding. No dependencies.
+- `src/Rrc.Production.Data` — EF Core model and `ProductionDbContext` for SQL Server.
+- `src/Rrc.Production.Ingestion` — run-once host that loads ledger files into the database.
+- `src/Rrc.Production.Web` — ASP.NET Core Razor Pages lookup site.
+- `tests/Rrc.Ebcdic.Tests` — decoder tests.
+- `tests/Rrc.Production.Ingestion.Tests` — ingestion tests.
+
+## Getting started
+
+Requires the .NET 10 SDK and SQL Server (LocalDB by default; see `ConnectionStrings:Production` in each `appsettings.json`).
+
+```
+dotnet build
+dotnet test
+dotnet tool install --global dotnet-ef
+dotnet ef migrations add InitialCreate --project src/Rrc.Production.Data --startup-project src/Rrc.Production.Web
+dotnet ef database update --project src/Rrc.Production.Data --startup-project src/Rrc.Production.Web
+dotnet run --project src/Rrc.Production.Ingestion
+dotnet run --project src/Rrc.Production.Web
+```
+
+The ingestion host reads files from `LedgerImport:InputDirectory` (default `ledgers`, relative to the working directory).
+
 ## Milestones
 
 - [ ] Parse one district ledger file per its PDF layout, with golden-file tests
