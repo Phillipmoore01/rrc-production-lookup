@@ -42,10 +42,12 @@ Royalty owners verify their payments against the production reported for their l
 ## Repository layout
 
 - `src/Rrc.Ebcdic` — EBCDIC text (code page 037), packed decimal (COMP-3), and zoned decimal decoding. No dependencies.
+- `src/Rrc.Ledger` — Historical Ledger (dataset `T.LDF900`) record parser: 160-byte records, segment types 01–08, cycle-key and district-code mapping per the LAD001 user's guide. Malformed records are returned with their raw bytes for quarantine.
 - `src/Rrc.Production.Data` — EF Core model and `ProductionDbContext` for SQL Server.
 - `src/Rrc.Production.Ingestion` — run-once host that loads ledger files into the database.
 - `src/Rrc.Production.Web` — ASP.NET Core Razor Pages lookup site.
 - `tests/Rrc.Ebcdic.Tests` — decoder tests.
+- `tests/Rrc.Ledger.Tests` — ledger record layout tests.
 - `tests/Rrc.Production.Ingestion.Tests` — ingestion tests.
 
 ## Getting started
