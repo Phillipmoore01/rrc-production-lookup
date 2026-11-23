@@ -22,6 +22,8 @@ public sealed record OilLeaseRoot(
     long BeginningCasingheadStatus,
     long OldestEndOfMonthBalance) : LedgerRecord(LedgerRecordType.Root);
 
+public sealed record LedgerTrailer() : LedgerRecord(LedgerRecordType.Root);
+
 public sealed record GasWellRoot(
     string District,
     int RrcId,

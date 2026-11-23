@@ -14,5 +14,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Rrc.Ebcdic\Rrc.Ebcdic.csproj" />
     <ProjectReference Include="..\Rrc.Production.Data\Rrc.Production.Data.csproj" />
+    <ProjectReference Include="..\Rrc.Ledger\Rrc.Ledger.csproj" />
   </ItemGroup>
 </Project>

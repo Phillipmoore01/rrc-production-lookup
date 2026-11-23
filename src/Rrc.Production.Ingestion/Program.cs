@@ -5,6 +5,7 @@ var builder = Host.CreateApplicationBuilder(args);
 
 builder.Services.Configure<LedgerImportOptions>(builder.Configuration.GetSection(LedgerImportOptions.SectionName));
 builder.Services.AddProductionDatabase(builder.Configuration);
+builder.Services.AddScoped<ILedgerFileImporter, LedgerFileImporter>();
 builder.Services.AddHostedService<LedgerImportWorker>();
 
 var host = builder.Build();

@@ -7,6 +7,10 @@ public static class LedgerRecordParser
 {
     public const int RecordLength = 160;
 
+    private const byte EbcdicZero = 0xF0;
+    private const int TrailerZerosStart = 2;
+    private const int TrailerZerosLength = 30;
+
     public static LedgerRecord Parse(ReadOnlySpan<byte> record)
     {
         if (record.Length != RecordLength)
@@ -33,6 +37,11 @@ public static class LedgerRecordParser
 
     private static LedgerRecord ParseRoot(ReadOnlySpan<byte> record)
     {
+        if (IsTrailer(record))
+        {
+            return new LedgerTrailer();
+        }
+
         var district = RrcDistrict.FromTapeValue(Number(record, 4, 2));
         var number = Number(record, 6, 6);
 
@@ -100,6 +109,9 @@ public static class LedgerRecordParser
         CancelledUnderage: Packed(record, 8),
         OffFileBalancingPeriodStatus: Packed(record, 13),
         OffFileCumulativeOverage: Packed(record, 18));
+
+    private static bool IsTrailer(ReadOnlySpan<byte> record) =>
+        !record.Slice(TrailerZerosStart, TrailerZerosLength).ContainsAnyExcept(EbcdicZero);
 
     private static bool IsYes(ReadOnlySpan<byte> record, int position) =>
         char.ToUpperInvariant(Character(record, position)) == 'Y';

@@ -1,8 +1,14 @@
 namespace Rrc.Ledger;
 
-public sealed record LedgerReadResult(long RecordNumber, LedgerRecord? Record, byte[]? RejectedBytes, string? Error)
+public sealed record LedgerReadResult(long RecordNumber, byte[] RawBytes, LedgerRecord? Record, string? Error)
 {
     public bool IsValid => Record is not null;
+
+    public static LedgerReadResult Valid(long recordNumber, byte[] rawBytes, LedgerRecord record) =>
+        new(recordNumber, rawBytes, record, null);
+
+    public static LedgerReadResult Invalid(long recordNumber, byte[] rawBytes, string error) =>
+        new(recordNumber, rawBytes, null, error);
 }
 
 public static class LedgerFileReader
@@ -11,11 +17,11 @@ public static class LedgerFileReader
     {
         ArgumentNullException.ThrowIfNull(stream);
 
-        var buffer = new byte[LedgerRecordParser.RecordLength];
         long recordNumber = 0;
 
         while (true)
         {
+            var buffer = new byte[LedgerRecordParser.RecordLength];
             var bytesRead = stream.ReadAtLeast(buffer, buffer.Length, throwOnEndOfStream: false);
             if (bytesRead == 0)
             {
@@ -26,9 +32,9 @@ public static class LedgerFileReader
 
             if (bytesRead < buffer.Length)
             {
-                yield return Rejected(
+                yield return LedgerReadResult.Invalid(
                     recordNumber,
-                    buffer.AsSpan(0, bytesRead),
+                    buffer[..bytesRead],
                     $"Trailing partial record of {bytesRead} bytes; expected {LedgerRecordParser.RecordLength}.");
                 yield break;
             }
@@ -41,14 +47,11 @@ public static class LedgerFileReader
     {
         try
         {
-            return new LedgerReadResult(recordNumber, LedgerRecordParser.Parse(buffer), null, null);
+            return LedgerReadResult.Valid(recordNumber, buffer, LedgerRecordParser.Parse(buffer));
         }
         catch (LedgerFormatException ex)
         {
-            return Rejected(recordNumber, buffer, ex.Message);
+            return LedgerReadResult.Invalid(recordNumber, buffer, ex.Message);
         }
     }
-
-    private static LedgerReadResult Rejected(long recordNumber, ReadOnlySpan<byte> bytes, string error) =>
-        new(recordNumber, null, bytes.ToArray(), error);
 }

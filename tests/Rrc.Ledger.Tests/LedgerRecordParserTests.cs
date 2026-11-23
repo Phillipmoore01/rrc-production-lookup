@@ -170,6 +170,14 @@ public class LedgerRecordParserTests
     }
 
     [Fact]
+    public void Recognizes_the_all_zero_end_of_file_record()
+    {
+        var record = new LedgerRecordBuilder("01").Text(3, new string('0', 30)).Build();
+
+        Assert.IsType<LedgerTrailer>(LedgerRecordParser.Parse(record));
+    }
+
+    [Fact]
     public void Rejects_records_of_the_wrong_length()
     {
         Assert.Throws<LedgerFormatException>(() => LedgerRecordParser.Parse(new byte[159]));
