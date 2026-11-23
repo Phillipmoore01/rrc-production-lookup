@@ -70,7 +70,7 @@ public static class LedgerRecordParser
         FieldNumber: Number(record, 13, 5),
         ReservoirNumber: Number(record, 18, 3),
         TypeFieldCode: Text(record, 22, 2),
-        WellNumber: Text(record, 26, 6),
+        WellNumber: Text(record, 26, 6).Trim(),
         P2Filed: IsYes(record, 40),
         CorrectedP2: IsYes(record, 41),
         Allowable: Packed(record, 50),

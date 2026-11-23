@@ -2,12 +2,10 @@ namespace Rrc.Ledger.Tests;
 
 public class GoldenFileTests
 {
-    private static readonly string FixturePath = Path.Combine(AppContext.BaseDirectory, "Fixtures", "oil-lease-sample.ebc");
-
     [Fact]
     public void Decodes_a_lease_extracted_from_the_statewide_oil_historical_ledger()
     {
-        using var stream = File.OpenRead(FixturePath);
+        using var stream = OpenFixture("oil-lease-sample.ebc");
         var results = LedgerFileReader.Read(stream).ToList();
 
         Assert.Equal(10, results.Count);
@@ -33,4 +31,50 @@ public class GoldenFileTests
             ],
             lease.Cycles.Select(c => c.Details.ToArray()));
     }
+
+    [Fact]
+    public void Decodes_a_gas_well_extracted_from_the_statewide_gas_historical_ledger()
+    {
+        using var stream = OpenFixture("gas-well-sample.ebc");
+        var results = LedgerFileReader.Read(stream).ToList();
+
+        Assert.Equal(14, results.Count);
+        Assert.All(results, r => Assert.True(r.IsValid, r.Error));
+
+        var well = Assert.Single(LedgerLeaseGrouper.Group(results)).Lease!;
+
+        Assert.Equal(new GasWellRoot("02", 127175, -8673, 255, 0), well.Root);
+
+        Assert.Equal(
+            [
+                new GasCycle(new DateOnly(2003, 2, 1), 81565, 70778, 250, "49", "2", true, false, 941, "AB", true, 941, 0, 0, 0, 25, 0),
+                new GasCycle(new DateOnly(2003, 1, 1), 81565, 70778, 250, "49", "2", true, false, 1123, "PR", true, 2382, 0, 0, 0, 339, 160),
+                new GasCycle(new DateOnly(2002, 12, 1), 81565, 70778, 250, "49", "2", true, false, 0, "PR", true, 2025, 0, 0, 0, 303, 348),
+            ],
+            well.Cycles.Select(c => c.Cycle));
+
+        Assert.Equal(
+            [
+                [
+                    new Disposition(LedgerRecordType.GasDisposition, 3, 913),
+                    new Disposition(LedgerRecordType.GasDisposition, 9, 28),
+                    new Disposition(LedgerRecordType.CondensateDisposition, 1, 185),
+                    new GasBalancingPeriod(0, 0, 0, 0),
+                ],
+                [
+                    new Disposition(LedgerRecordType.GasDisposition, 3, 2009),
+                    new Disposition(LedgerRecordType.GasDisposition, 9, 373),
+                    new Disposition(LedgerRecordType.CondensateDisposition, 1, 527),
+                ],
+                [
+                    new Disposition(LedgerRecordType.GasDisposition, 3, 1692),
+                    new Disposition(LedgerRecordType.GasDisposition, 9, 333),
+                    new Disposition(LedgerRecordType.CondensateDisposition, 1, 187),
+                ],
+            ],
+            well.Cycles.Select(c => c.Details.ToArray()));
+    }
+
+    private static FileStream OpenFixture(string name) =>
+        File.OpenRead(Path.Combine(AppContext.BaseDirectory, "Fixtures", name));
 }
