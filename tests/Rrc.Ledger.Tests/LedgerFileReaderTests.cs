@@ -23,7 +23,7 @@ public class LedgerFileReaderTests
             {
                 Assert.False(r.IsValid);
                 Assert.Equal(2, r.RecordNumber);
-                Assert.Equal(malformed, r.RejectedBytes);
+                Assert.Equal(malformed, r.RawBytes);
                 Assert.Contains("'99'", r.Error);
             },
             r => Assert.Equal(new Disposition(LedgerRecordType.OilDisposition, 1, 500), r.Record),
@@ -31,7 +31,7 @@ public class LedgerFileReaderTests
             {
                 Assert.False(r.IsValid);
                 Assert.Equal(4, r.RecordNumber);
-                Assert.Equal(10, r.RejectedBytes!.Length);
+                Assert.Equal(10, r.RawBytes.Length);
             });
     }
 

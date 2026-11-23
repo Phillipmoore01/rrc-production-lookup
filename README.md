@@ -44,7 +44,7 @@ Royalty owners verify their payments against the production reported for their l
 - `src/Rrc.Ebcdic` — EBCDIC text (code page 037), packed decimal (COMP-3), and zoned decimal decoding. No dependencies.
 - `src/Rrc.Ledger` — Historical Ledger (dataset `T.LDF900`) record parser: 160-byte records, segment types 01–08, cycle-key and district-code mapping per the LAD001 user's guide. Malformed records are returned with their raw bytes for quarantine.
 - `src/Rrc.Production.Data` — EF Core model and `ProductionDbContext` for SQL Server.
-- `src/Rrc.Production.Ingestion` — run-once host that loads ledger files into the database.
+- `src/Rrc.Production.Ingestion` — run-once host that loads ledger files into the database. Each root record becomes a `Lease` (oil lease, or gas well keyed by RRC ID) and each cycle record a `LeaseProductionMonth`; reloading a lease updates existing months and adds new ones.
 - `src/Rrc.Production.Web` — ASP.NET Core Razor Pages lookup site.
 - `tests/Rrc.Ebcdic.Tests` — decoder tests.
 - `tests/Rrc.Ledger.Tests` — ledger record layout tests.
@@ -57,14 +57,13 @@ Requires the .NET 10 SDK and SQL Server (LocalDB by default; see `ConnectionStri
 ```
 dotnet build
 dotnet test
-dotnet tool install --global dotnet-ef
-dotnet ef migrations add InitialCreate --project src/Rrc.Production.Data --startup-project src/Rrc.Production.Web
+dotnet tool restore
 dotnet ef database update --project src/Rrc.Production.Data --startup-project src/Rrc.Production.Web
 dotnet run --project src/Rrc.Production.Ingestion
 dotnet run --project src/Rrc.Production.Web
 ```
 
-The ingestion host reads files from `LedgerImport:InputDirectory` (default `ledgers`, relative to the working directory).
+The ingestion host reads files from `LedgerImport:InputDirectory` (default `ledgers`, relative to the working directory) and saves leases in batches of `LedgerImport:BatchSize`. Rejected records (malformed, orphaned, or duplicate months) are written to `LedgerImport:QuarantineDirectory` (default `quarantine`) as `<file>.rejected` (raw 160-byte records) and `<file>.rejected.log` (record number and reason).
 
 ## Milestones
 

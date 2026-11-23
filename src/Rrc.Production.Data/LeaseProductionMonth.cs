@@ -8,6 +8,8 @@ public class LeaseProductionMonth
 
     public DateOnly Month { get; set; }
 
+    public int OperatorNumber { get; set; }
+
     public decimal OilBarrels { get; set; }
 
     public decimal GasMcf { get; set; }

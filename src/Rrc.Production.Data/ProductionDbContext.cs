@@ -33,6 +33,8 @@ public class ProductionDbContext(DbContextOptions<ProductionDbContext> options) 
             month.Property(m => m.CondensateBarrels).HasPrecision(14, 2);
             month.Property(m => m.CasingheadGasMcf).HasPrecision(14, 2);
 
+            month.HasIndex(m => m.OperatorNumber);
+
             month.HasOne(m => m.Lease)
                 .WithMany(l => l.ProductionMonths)
                 .HasForeignKey(m => m.LeaseId);

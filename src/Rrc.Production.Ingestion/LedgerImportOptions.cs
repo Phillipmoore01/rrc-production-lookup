@@ -7,4 +7,8 @@ public class LedgerImportOptions
     public string InputDirectory { get; set; } = "ledgers";
 
     public string FilePattern { get; set; } = "*";
+
+    public string QuarantineDirectory { get; set; } = "quarantine";
+
+    public int BatchSize { get; set; } = 500;
 }
