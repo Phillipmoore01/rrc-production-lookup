@@ -36,6 +36,16 @@ public class LedgerLeaseGrouperTests
     }
 
     [Fact]
+    public void Closes_the_last_lease_at_the_trailer_without_emitting_the_trailer()
+    {
+        var results = Group(OilRoot, OilMonth, new LedgerTrailer());
+
+        var lease = Assert.Single(results).Lease!;
+        Assert.Equal(OilRoot, lease.Root);
+        Assert.Single(lease.Cycles);
+    }
+
+    [Fact]
     public void Rejects_records_that_appear_before_any_root()
     {
         var results = Group(OilMonth, OilRoot);

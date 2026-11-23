@@ -17,6 +17,14 @@ Royalty owners verify their payments against the production reported for their l
 
 - [RRC Data Sets Available for Download](https://www.rrc.texas.gov/resource-center/research/data-sets-available-for-download/) — oil and gas ledgers by district, refreshed monthly, each with a PDF manual.
 - [Oil and Gas Historical Ledger user's guide](https://www.rrc.texas.gov/media/ocwhbdp2/oilandgashistoricalledger_lad001.pdf)
+- Historical Ledger – Statewide Oil (`S.LDF900OL.D.ebc.gz`, about 450 MB compressed, 9.8 GB uncompressed) and Statewide Gas (`S.LDF900GS.D.ebc.gz`), published monthly through the RRC's GoAnywhere file portal linked from the data sets page. Coverage starts January 1993 and ends about 25 months before the publication date.
+
+### Observed file characteristics
+
+- Records are 160 bytes with no delimiters and no tape labels.
+- The file ends with an undocumented trailer record: record id `01` followed by 30 EBCDIC zeros. The parser returns it as `LedgerTrailer`.
+- Within each lease, cycle records are in descending month order (ascending cycle key).
+- The November 2026 statewide oil file has 61,274,989 records: 159,737 leases and 29,926,594 lease months, with no malformed records.
 
 ## Engineering problems
 
@@ -47,7 +55,7 @@ Royalty owners verify their payments against the production reported for their l
 - `src/Rrc.Production.Ingestion` — run-once host that loads ledger files into the database. Each root record becomes a `Lease` (oil lease, or gas well keyed by RRC ID) and each cycle record a `LeaseProductionMonth`; reloading a lease updates existing months and adds new ones.
 - `src/Rrc.Production.Web` — ASP.NET Core Razor Pages lookup site.
 - `tests/Rrc.Ebcdic.Tests` — decoder tests.
-- `tests/Rrc.Ledger.Tests` — ledger record layout tests.
+- `tests/Rrc.Ledger.Tests` — ledger record layout tests, including a golden file (`Fixtures/oil-lease-sample.ebc`) of ten records for lease 01-000737 taken from the statewide oil ledger.
 - `tests/Rrc.Production.Ingestion.Tests` — ingestion tests.
 
 ## Getting started
@@ -63,7 +71,7 @@ dotnet run --project src/Rrc.Production.Ingestion
 dotnet run --project src/Rrc.Production.Web
 ```
 
-The ingestion host reads files from `LedgerImport:InputDirectory` (default `ledgers`, relative to the working directory) and saves leases in batches of `LedgerImport:BatchSize`. Rejected records (malformed, orphaned, or duplicate months) are written to `LedgerImport:QuarantineDirectory` (default `quarantine`) as `<file>.rejected` (raw 160-byte records) and `<file>.rejected.log` (record number and reason).
+The ingestion host reads files from `LedgerImport:InputDirectory` (default `ledgers`, relative to the working directory; `.gz` files are decompressed while reading) and saves leases in batches of `LedgerImport:BatchSize`. Rejected records (malformed, orphaned, or duplicate months) are written to `LedgerImport:QuarantineDirectory` (default `quarantine`) as `<file>.rejected` (raw 160-byte records) and `<file>.rejected.log` (record number and reason).
 
 ## Milestones
 

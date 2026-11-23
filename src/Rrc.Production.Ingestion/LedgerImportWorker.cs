@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using Microsoft.Extensions.Options;
 
 namespace Rrc.Production.Ingestion;
@@ -8,6 +9,9 @@ public class LedgerImportWorker(
     IHostApplicationLifetime lifetime,
     ILogger<LedgerImportWorker> logger) : BackgroundService
 {
+    private const string GzipExtension = ".gz";
+    private const int BufferSize = 1 << 20;
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         try
@@ -39,8 +43,8 @@ public class LedgerImportWorker(
         await using var scope = scopeFactory.CreateAsyncScope();
         var importer = scope.ServiceProvider.GetRequiredService<ILedgerFileImporter>();
 
-        await using var stream = file.OpenRead();
-        using var quarantine = new LedgerQuarantineWriter(quarantineDirectory, file.Name);
+        await using var stream = OpenLedger(file);
+        using var quarantine = new LedgerQuarantineWriter(quarantineDirectory, LedgerName(file));
 
         var summary = await importer.ImportAsync(stream, quarantine, stoppingToken);
 
@@ -55,5 +59,15 @@ public class LedgerImportWorker(
         {
             logger.LogWarning("Rejected records from {File} written to {Path}", file.Name, quarantine.LogPath);
         }
+    }
+
+    private static bool IsGzip(FileInfo file) => file.Extension.Equals(GzipExtension, StringComparison.OrdinalIgnoreCase);
+
+    private static string LedgerName(FileInfo file) => IsGzip(file) ? file.Name[..^GzipExtension.Length] : file.Name;
+
+    private static Stream OpenLedger(FileInfo file)
+    {
+        var stream = new FileStream(file.FullName, FileMode.Open, FileAccess.Read, FileShare.Read, BufferSize);
+        return IsGzip(file) ? new GZipStream(stream, CompressionMode.Decompress) : stream;
     }
 }

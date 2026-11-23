@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -31,6 +32,43 @@ public class LedgerImportWorkerTests
 
             Assert.Equal(2, importedLengths.Count);
             lifetime.Verify(l => l.StopApplication(), Times.Once);
+        }
+        finally
+        {
+            directory.Delete(recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Decompresses_gzip_ledger_files()
+    {
+        var directory = Directory.CreateTempSubdirectory();
+        try
+        {
+            byte[] content = [0xF0, 0xF1, 0xF2, 0xF3];
+            await using (var file = File.Create(Path.Combine(directory.FullName, "olf001.ebc.gz")))
+            await using (var gzip = new GZipStream(file, CompressionLevel.Fastest))
+            {
+                await gzip.WriteAsync(content);
+            }
+
+            byte[]? imported = null;
+            var importer = new Mock<ILedgerFileImporter>();
+            importer
+                .Setup(i => i.ImportAsync(It.IsAny<Stream>(), It.IsAny<ILedgerQuarantine>(), It.IsAny<CancellationToken>()))
+                .Callback<Stream, ILedgerQuarantine, CancellationToken>((s, _, _) =>
+                {
+                    using var buffer = new MemoryStream();
+                    s.CopyTo(buffer);
+                    imported = buffer.ToArray();
+                })
+                .ReturnsAsync(new LedgerImportSummary(0, 0, 0));
+            var worker = CreateWorker(directory.FullName, importer.Object, Mock.Of<IHostApplicationLifetime>());
+
+            await worker.StartAsync(CancellationToken.None);
+            await worker.ExecuteTask!;
+
+            Assert.Equal(content, imported);
         }
         finally
         {

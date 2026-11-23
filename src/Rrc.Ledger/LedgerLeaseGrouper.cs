@@ -57,7 +57,7 @@ public static class LedgerLeaseGrouper
                     yield return LedgerGroupResult.Accepted(lease.Build());
                 }
 
-                lease = new PendingLease(record, result.RecordNumber);
+                lease = record is LedgerTrailer ? null : new PendingLease(record, result.RecordNumber);
                 rootRejected = false;
                 continue;
             }
